@@ -1,5 +1,11 @@
+-- Active: 1723505726083@@127.0.0.1@5432@employee_db
 DROP DATABASE IF EXISTS employee_db;
 CREATE DATABASE employee_db;
+
+CREATE TABLE department (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(30) NOT NULL
+);
 
 CREATE TABLE role (
     id SERIAL PRIMARY KEY,
