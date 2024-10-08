@@ -186,3 +186,132 @@ const addRole = async () => {
       console.log(error);
   }
 };
+const addEmployee = async () => {
+  try {
+      const rolesQuery = await pool.query(`
+          SELECT id, title
+          FROM roles
+          `);
+
+      const employeesQuery = await pool.query(`
+          SELECT id,
+              CONCAT(first_name, ' ', last_name)
+                  AS name
+          FROM employees`)
+
+      const roles = rolesQuery.rows;
+      const employees = employeesQuery.rows
+
+      const roleOptions = roles.map(role => ({
+          name: role.title,
+          value: role.id
+      }))
+
+      const managerOptions = employees.map(employee => ({
+          name: employee.title,
+          value: employee.id
+      }))
+
+      managerOptions.push(
+          {
+              name: 'None',
+              value: null
+          });
+
+      const answer = await inquirer.prompt(
+          [
+              {
+                  type: 'input',
+                  name: 'firstName',
+                  message: "What is the first name of the employee?",
+                  validate: input => input ? true : "Invalid input. Please try again."
+              },
+              {
+                  type: 'input',
+                  name: 'lastName',
+                  message: "What is the last name of the employee?",
+                  validate: input => input ? true : "Invalid input. Please try again."
+              },
+              {
+                  type: 'list',
+                  name: 'roleId',
+                  message: "What is the role of the employee?",
+                  choices: roleOptions
+              },
+              {
+                  type: 'list',
+                  name: 'managerId',
+                  message: 'Who is the manager of the employee?',
+                  choices: managerOptions
+              }
+          ]
+      );
+
+      const result = await pool.query(`
+          INSERT INTO employee (first_name, last_name, role_id, manager_id)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id, first_name, last_name, role_id, manager_id
+          `, [answer.firstName, answer.lastName, answer.roleId, answer.managerId]);
+
+      console.log('New Employee added.');
+      init();
+  } catch (error) {
+      console.log(error);
+  }
+};
+const updateEmployee = async () => {
+  try {
+      const rolesQuery = await pool.query(`
+          SELECT id, title
+          FROM roles
+          `);
+
+      const employeesQuery = await pool.query(`
+          SELECT id,
+              CONCAT(first_name, ' ', last_name)
+                  AS name
+          FROM employees`)
+
+      const roles = rolesQuery.rows;
+      const employees = employeesQuery.rows
+
+      const roleOptions = roles.map(roles => ({
+          name: roles.title,
+          value: roles.id
+      }))
+
+      const employeeOptions = employees.map(employees => ({
+          name: employees.name,
+          value: employees.id
+      }))
+
+      const answer = await inquirer.prompt(
+          [
+              {
+                  type: 'list',
+                  name: 'employeeId',
+                  message: "What employee would you like to update?",
+                  choices: employeeOptions
+              },
+              {
+                  type: 'list',
+                  name: 'roleId',
+                  message: 'What is the new role for the employee?',
+                  choices: roleOptions
+              }
+          ]
+      );
+
+      const result = await pool.query(`
+          UPDATE employee
+          SET role_id = $1
+          WHERE id = $2
+          RETURNING id, first_name, last_name, role_id
+          `, [answer.roleId, answer.employeeId]);
+
+      console.log('New Employee added.');
+      employeeTrackerMenu();
+  } catch (error) {
+      console.log(error);
+  }
+};
